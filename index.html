@@ -214,7 +214,7 @@
         }
 
         function updateCircleColor(circle, index) {
-            const savedColor = localStorage.getItem(`arche_colorM${index}`);
+            const savedColor = localStorage.getItem(`FT${index}`);
             const colorIndex = (index - 17) % COLORS.length;
             const defaultColor = COLORS[colorIndex >= 0 ? colorIndex : 0];
             const color = savedColor || defaultColor;
