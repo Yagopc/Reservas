@@ -221,21 +221,21 @@
             circle.style.backgroundColor = color;
             updateCircleText(circle, color, Math.floor((index - 1) / COLUMNS));
             if (!savedColor) {
-                localStorage.setItem(`arche_colorM${index}`, color);
+                localStorage.setItem(`FT${index}`, color);
             }
         }
 
         function updateCircleOnClick(circle, index) {
             if (isOffOnActive) {
                 circle.style.backgroundColor = 'red';
-                localStorage.setItem(`arche_colorM${index}`, 'red');
+                localStorage.setItem(`FT${index}`, 'red');
                 updateCircleText(circle, 'red', Math.floor((index - 1) / COLUMNS));
             } else {
                 const currentColor = circle.style.backgroundColor;
                 const nextColorIndex = (COLORS.indexOf(currentColor) + 1) % COLORS.length;
                 const newColor = COLORS[nextColorIndex];
                 circle.style.backgroundColor = newColor;
-                localStorage.setItem(`arche_colorM${index}`, newColor);
+                localStorage.setItem(`FT${index}`, newColor);
                 updateCircleText(circle, newColor, Math.floor((index - 1) / COLUMNS));
             }
         }
@@ -266,7 +266,7 @@
             const month = String(today.getMonth() + 1).padStart(2, '0');
             const year = String(today.getFullYear()).slice(-2);
             const formattedDate = `${day}/${month}/${year}`;
-            const fileName = `fuentezT_${formattedDate}.json`;
+            const fileName = `fT${formattedDate}.json`;
             const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
@@ -321,7 +321,7 @@
                 const circle = cell.querySelector('.circle');
                 if (circle) {
                     circle.style.backgroundColor = item.color;
-                    localStorage.setItem(`arche_colorM${item.index}`, item.color);
+                    localStorage.setItem(`FT${item.index}`, item.color);
                     updateCircleText(circle, item.color, Math.floor((item.index - 1) / COLUMNS));
                 }
             });
@@ -340,7 +340,7 @@
                 if (circle) {
                     circle.style.backgroundColor = 'red';
                     updateCircleText(circle, 'red', Math.floor(i / COLUMNS));
-                    localStorage.setItem(`arche_colorM${i + 1}`, 'red');
+                    localStorage.setItem(`FT${i + 1}`, 'red');
                 }
             }
         }
