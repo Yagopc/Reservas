@@ -127,7 +127,7 @@
 
         function updateCircleColor(circle, index) {
             const colorIndex = (index - 17) % colors.length;
-            const savedColor = localStorage.getItem('arche_color' + index);
+            const savedColor = localStorage.getItem('SM' + index);
             circle.style.backgroundColor = savedColor || colors[colorIndex];
             
             const row = Math.floor((index - 1) / 16);
@@ -163,7 +163,7 @@
             let currentColor = circle.style.backgroundColor;
             let nextColorIndex = (colors.indexOf(currentColor) + 1) % colors.length;
             circle.style.backgroundColor = colors[nextColorIndex];
-            localStorage.setItem('arche_color' + index, colors[nextColorIndex]);
+            localStorage.setItem('SM' + index, colors[nextColorIndex]);
             
             const row = Math.floor((index - 1) / 16);
             if (circle.style.backgroundColor === 'gray') {
@@ -224,7 +224,7 @@
                         const circle = cell.querySelector('.circle');
                         if (circle) {
                             circle.style.backgroundColor = item.color;
-                            localStorage.setItem('arche_color' + item.index, item.color);
+                            localStorage.setItem('SM' + item.index, item.color);
                             const row = Math.floor((item.index - 1) / 16);
                             if (item.color === 'gray') {
                                 circle.textContent = '1/2';
@@ -280,7 +280,7 @@
                         const circle = cell.querySelector('.circle');
                         if (circle) {
                             circle.style.backgroundColor = item.color;
-                            localStorage.setItem('arche_color' + item.index, item.color);
+                            localStorage.setItem('SM' + item.index, item.color);
                             const row = Math.floor((item.index - 1) / 16);
                             if (item.color === 'gray') {
                                 circle.textContent = '1/2';
@@ -333,7 +333,7 @@
                     const rowNumbers = ['7', '8', '9', '10', '11', '12', '1', '2'];
                     circle.textContent = rowNumbers[row];
                     circle.style.color = 'white';
-                    localStorage.setItem('arche_color' + i, 'red');
+                    localStorage.setItem('SM' + i, 'red');
                 }
             }
         }
