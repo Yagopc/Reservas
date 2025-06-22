@@ -24,27 +24,9 @@
             background-color: #f0f0f0;
         }
         .cell.text {
+            background-color: black;
+            color: white;
             font-size: 16px;
-        }
-        .cell.text.pb {
-            background-color: orange;
-            color: black;
-        }
-        .cell.text.fse, .cell.text.be, .cell.text.t {
-            background-color: lightblue;
-            color: black;
-        }
-        .cell.text.cf {
-            background-color: darkgreen;
-            color: white;
-        }
-        .cell.text.vl {
-            background-color: black;
-            color: white;
-        }
-        .cell.text.h {
-            background-color: black;
-            color: white;
         }
         .circle {
             width: 30px;
@@ -64,15 +46,6 @@
         .highlighted {
             background-color: yellow;
         }
-        #lockButton {
-            background-color: red;
-            color: white;
-            padding: 5px 10px;
-            margin-left: 10px;
-        }
-        #lockButton.unlocked {
-            background-color: green;
-        }
         #offOnButton {
             background-color: red;
             color: white;
@@ -82,18 +55,30 @@
         #offOnButton.on {
             background-color: green;
         }
+        #lockButton {
+            background-color: red;
+            color: white;
+            padding: 5px 10px;
+            margin-left: 10px;
+        }
+        #lockButton.unlocked {
+            background-color: green;
+        }
     </style>
 </head>
 <body>
     <div id="grid"></div>
-    <button id="saveButton">Guardar Datos</button>
-    <button id="loadButton">Cargar Datos</button>
-    <button id="resetButton">Reinicio</button>
-    <button id="lockButton">Bloqueado</button>
-    <button id="offOnButton">OFF</button>
+    <button onclick="saveData()">Guardar Datos</button>
+    <button onclick="loadData()">Cargar Datos</button>
+    <button onclick="confirmReset()">Reinicio</button>
+    <button id="lockButton" onclick="toggleLock()">Bloqueado</button>
+    <button id="offOnButton" onclick="toggleOffOn()">OFF</button>
+    <button onclick="window.location.href='https://yagopc.github.io/Reservas/FM.html'">FM</button>
+    <button onclick="window.location.href='https://yagopc.github.io/Reservas/SM.html'">SM</button>
+    <button onclick="window.location.href='https://yagopc.github.io/Reservas/ST.html'">ST</button>
     <div>
         <input type="text" id="serverUrl" placeholder="Ingrese la URL del servidor" style="width: 300px;">
-        <button id="serverLoadButton">Cargar desde Servidor</button>
+        <button onclick="loadDataFromServer()">Cargar desde Servidor</button>
     </div>
     <script>
         const GRID_SIZE = 144;
@@ -102,7 +87,7 @@
         const TEXT_MAPPING = {
             1: 'PB1', 2: 'PB2', 3: 'PB3', 4: 'FSE1', 5: 'FSE2', 6: 'BE', 7: 'CF1', 8: 'CF2',
             9: 'T1', 10: 'T2', 11: 'T3', 12: 'T4', 13: 'T5', 14: 'T6', 15: 'VL', 16: ' ',
-            32: 'H15', 48: 'H16', 64: 'H17', 80: 'H18', 96: 'H19', 112: 'H20', 128: 'H21', 144: 'H22'
+            32: 'H8', 48: 'H9', 64: 'H10', 80: 'H11', 96: 'H12', 112: 'H13', 128: 'H14', 144: 'H15'
         };
         const COLOR_TEXT_MAPPING = {
             gray: { text: '1/2', color: 'black' },
@@ -122,8 +107,8 @@
         const grid = document.getElementById('grid');
         let highlightedRows = new Set();
         let highlightedColumns = new Set();
-        let isLocked = true;
         let isOffOnActive = false;
+        let isLocked = true;
 
         // Inicializar la cuadrícula
         for (let i = 1; i <= GRID_SIZE; i++) {
@@ -135,30 +120,17 @@
             if (TEXT_MAPPING[i]) {
                 cell.textContent = TEXT_MAPPING[i];
                 cell.classList.add('text');
-                if (['PB1', 'PB2', 'PB3'].includes(TEXT_MAPPING[i])) {
-                    cell.classList.add('pb');
-                } else if (['FSE1', 'FSE2', 'BE'].includes(TEXT_MAPPING[i])) {
-                    cell.classList.add('fse', 'be');
-                } else if (['CF1', 'CF2'].includes(TEXT_MAPPING[i])) {
-                    cell.classList.add('cf');
-                } else if (['T1', 'T2', 'T3', 'T4', 'T5', 'T6'].includes(TEXT_MAPPING[i])) {
-                    cell.classList.add('t');
-                } else if (TEXT_MAPPING[i] === 'VL') {
-                    cell.classList.add('vl');
-                } else if (TEXT_MAPPING[i].startsWith('H')) {
-                    cell.classList.add('h');
-                }
                 if (i <= COLUMNS) {
-                    cell.addEventListener('click', () => toggleHighlight(cell.dataset.column, 'column'));
+                    cell.addEventListener('click', function() { toggleHighlight(this.dataset.column, 'column'); });
                 } else if (i % COLUMNS === 0) {
-                    cell.addEventListener('click', () => toggleHighlight(cell.dataset.row, 'row'));
+                    cell.addEventListener('click', function() { toggleHighlight(this.dataset.row, 'row'); });
                 }
             } else {
                 const circle = document.createElement('div');
                 circle.classList.add('circle');
                 cell.appendChild(circle);
-                updateCircleColor(circle, i);
-                cell.addEventListener('click', () => {
+                updateCircleColor(circle, i); // Cargar color desde localStorage o asignar rojo
+                cell.addEventListener('click', function() {
                     if (!isLocked) {
                         updateCircleOnClick(circle, i);
                     }
@@ -166,14 +138,6 @@
             }
             grid.appendChild(cell);
         }
-
-        // Asignar eventos a los botones
-        document.getElementById('saveButton').addEventListener('click', saveData);
-        document.getElementById('loadButton').addEventListener('click', loadData);
-        document.getElementById('resetButton').addEventListener('click', confirmReset);
-        document.getElementById('lockButton').addEventListener('click', toggleLock);
-        document.getElementById('offOnButton').addEventListener('click', toggleOffOn);
-        document.getElementById('serverLoadButton').addEventListener('click', loadDataFromServer);
 
         function toggleLock() {
             isLocked = !isLocked;
@@ -212,11 +176,10 @@
 
         function updateCircleColor(circle, index) {
             const savedColor = localStorage.getItem(`arche_colorM${index}`);
-            const colorIndex = (index - 17) % COLORS.length;
-            const defaultColor = COLORS[colorIndex >= 0 ? colorIndex : 0];
-            const color = savedColor || defaultColor;
+            const color = savedColor || 'red'; // Rojo por defecto si no hay color guardado
             circle.style.backgroundColor = color;
             updateCircleText(circle, color, Math.floor((index - 1) / COLUMNS));
+            // Guardar el color en localStorage si no existía
             if (!savedColor) {
                 localStorage.setItem(`arche_colorM${index}`, color);
             }
@@ -263,7 +226,7 @@
             const month = String(today.getMonth() + 1).padStart(2, '0');
             const year = String(today.getFullYear()).slice(-2);
             const formattedDate = `${day}/${month}/${year}`;
-            const fileName = `fuentezT_${formattedDate}.json`;
+            const fileName = `fuentezM_${formattedDate}.json`;
             const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
