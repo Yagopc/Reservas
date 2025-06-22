@@ -175,27 +175,27 @@
         }
 
         function updateCircleColor(circle, index) {
-            const savedColor = localStorage.getItem(`arche_colorM${index}`);
+            const savedColor = localStorage.getItem(`SM${index}`);
             const color = savedColor || 'red'; // Rojo por defecto si no hay color guardado
             circle.style.backgroundColor = color;
             updateCircleText(circle, color, Math.floor((index - 1) / COLUMNS));
             // Guardar el color en localStorage si no existía
             if (!savedColor) {
-                localStorage.setItem(`arche_colorM${index}`, color);
+                localStorage.setItem(`SM${index}`, color);
             }
         }
 
         function updateCircleOnClick(circle, index) {
             if (isOffOnActive) {
                 circle.style.backgroundColor = 'red';
-                localStorage.setItem(`arche_colorM${index}`, 'red');
+                localStorage.setItem(`SM${index}`, 'red');
                 updateCircleText(circle, 'red', Math.floor((index - 1) / COLUMNS));
             } else {
                 const currentColor = circle.style.backgroundColor;
                 const nextColorIndex = (COLORS.indexOf(currentColor) + 1) % COLORS.length;
                 const newColor = COLORS[nextColorIndex];
                 circle.style.backgroundColor = newColor;
-                localStorage.setItem(`arche_colorM${index}`, newColor);
+                localStorage.setItem(`SM${index}`, newColor);
                 updateCircleText(circle, newColor, Math.floor((index - 1) / COLUMNS));
             }
         }
