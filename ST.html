@@ -156,7 +156,7 @@
 
         function updateCircleColor(circle, index) {
             const colorIndex = (index - 17) % COLORS.length;
-            const savedColor = localStorage.getItem(`arche_colorM${index}`);
+            const savedColor = localStorage.getItem(`ST${index}`);
             const color = savedColor || COLORS[colorIndex >= 0 ? colorIndex : 0];
             circle.style.backgroundColor = color;
             updateCircleText(circle, color, Math.floor((index - 1) / COLUMNS));
@@ -167,7 +167,7 @@
             const nextColorIndex = (COLORS.indexOf(currentColor) + 1) % COLORS.length;
             const newColor = COLORS[nextColorIndex];
             circle.style.backgroundColor = newColor;
-            localStorage.setItem(`arche_colorM${index}`, newColor);
+            localStorage.setItem(`ST${index}`, newColor);
             updateCircleText(circle, newColor, Math.floor((index - 1) / COLUMNS));
         }
 
@@ -195,7 +195,7 @@
             const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = 'Sarchedat.json';
+            a.download = 'St.json';
             a.click();
         }
 
@@ -265,7 +265,7 @@
                 if (circle) {
                     circle.style.backgroundColor = 'red';
                     updateCircleText(circle, 'red', Math.floor(i / COLUMNS));
-                    localStorage.setItem(`arche_colorM${i + 1}`, 'red');
+                    localStorage.setItem(`ST${i + 1}`, 'red');
                 }
             }
         }
@@ -292,7 +292,7 @@ function updateCircleOnClick(circle, index) {
 
     if (isOffOnActive) {
         circle.style.backgroundColor = 'red';
-        localStorage.setItem('arche_colorM' + index, 'red');
+        localStorage.setItem('ST' + index, 'red');
         const row = Math.floor((index - 1) / 16);
         updateCircleText(circle, 'red', row);
     } else {
@@ -300,7 +300,7 @@ function updateCircleOnClick(circle, index) {
         const nextColorIndex = (colors.indexOf(currentColor) + 1) % colors.length;
         const newColor = colors[nextColorIndex];
         circle.style.backgroundColor = newColor;
-        localStorage.setItem('arche_colorM' + index, newColor);
+        localStorage.setItem('ST' + index, newColor);
         const row = Math.floor((index - 1) / 16);
         updateCircleText(circle, newColor, row);
     }
