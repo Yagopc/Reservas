@@ -39,37 +39,35 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 16px; /* Reducido para evitar desbordamiento */
+            font-size: 16px;
             font-weight: bold;
             text-align: center;
         }
         .highlighted {
             background-color: yellow;
         }
-    
-#lockButton {
-    background-color: red;
-    color: white;
-    padding: 5px 10px;
-    margin-left: 10px;
-}
-#lockButton.unlocked {
-    background-color: green;
-}
-#offOnButton {
-    background-color: red;
-    color: white;
-    padding: 5px 10px;
-    margin-left: 10px;
-}
-#offOnButton.on {
-    background-color: green;
-}
-
-</style>
+        #lockButton {
+            background-color: red;
+            color: white;
+            padding: 5px 10px;
+            margin-left: 10px;
+        }
+        #lockButton.unlocked {
+            background-color: green;
+        }
+        #offOnButton {
+            background-color: red;
+            color: white;
+            padding: 5px 10px;
+            margin-left: 10px;
+        }
+        #offOnButton.on {
+            background-color: green;
+        }
+    </style>
 </head>
 <body>
-   <div id="grid"></div>
+    <div id="grid"></div>
     <button onclick="saveData()">Guardar Datos</button>
     <button onclick="loadData()">Cargar Datos</button>
     <button onclick="confirmReset()">Reinicio</button>
@@ -89,7 +87,7 @@
         const TEXT_MAPPING = {
             1: 'PC', 2: 'GIN', 3: 'P5', 4: 'P6', 5: 'PE', 6: 'PD1', 7: 'PD2', 8: 'PD3',
             9: 'PD4', 10: 'CF', 11: 'S1', 12: 'S2', 13: 'S3', 14: 'FR ', 15: 'T', 16: ' ',
-            32: 'H15', 48: 'H16', 64: 'H17', 80: 'H18', 96: 'H19', 112: 'H20', 128: 'H21', 144: 'H22'
+            32: '15', 48: '16', 64: '17', 80: '18', 96: '19', 112: '20', 128: '21', 144: '22'
         };
         const COLOR_TEXT_MAPPING = {
             gray: { text: '1/2', color: 'black' },
@@ -98,17 +96,26 @@
             cyan: { text: 'Bad', color: 'black' },
             blue: { text: 'B', color: 'white' },
             orange: { text: 'Vb', color: 'black' },
-            red: { text: (row) => {
-                const textIndex = (row + 1) * COLUMNS; // Índice de la celda de texto en la última columna
-                const text = TEXT_MAPPING[textIndex] || '';
-                return text.replace('H', ''); // Extrae el número (e.g., 'H15' → '15', 'H22' → '22')
-            }, color: 'white' }
+            red: { 
+                text: (row) => {
+                    // Para la fila 0, no mostramos número (se mantienen las letras)
+                    if (row === 0) return '';
+                    // Para otras filas, obtenemos el número de la última celda de la fila
+                    const lastCellInRow = (row * COLUMNS) + 16;
+                    return TEXT_MAPPING[lastCellInRow] || '';
+                }, 
+                color: 'white' 
+            },
+            green: { text: '', color: '' }
         };
 
         const grid = document.getElementById('grid');
         let highlightedRows = new Set();
         let highlightedColumns = new Set();
+        let isLocked = true;
+        let isOffOnActive = false;
 
+        // Inicializar la cuadrícula
         for (let i = 1; i <= GRID_SIZE; i++) {
             const cell = document.createElement('div');
             cell.classList.add('cell');
@@ -128,7 +135,11 @@
                 circle.classList.add('circle');
                 cell.appendChild(circle);
                 updateCircleColor(circle, i);
-                cell.addEventListener('click', function() { updateCircleOnClick(circle, i); });
+                cell.addEventListener('click', function() { 
+                    if (!isLocked) {
+                        updateCircleOnClick(circle, i);
+                    }
+                });
             }
             grid.appendChild(cell);
         }
@@ -155,20 +166,30 @@
         }
 
         function updateCircleColor(circle, index) {
-            const colorIndex = (index - 17) % COLORS.length;
             const savedColor = localStorage.getItem(`ST${index}`);
-            const color = savedColor || COLORS[colorIndex >= 0 ? colorIndex : 0];
+            const colorIndex = (index - 17) % COLORS.length;
+            const defaultColor = COLORS[colorIndex >= 0 ? colorIndex : 0];
+            const color = savedColor || defaultColor;
             circle.style.backgroundColor = color;
             updateCircleText(circle, color, Math.floor((index - 1) / COLUMNS));
+            if (!savedColor) {
+                localStorage.setItem(`ST${index}`, color);
+            }
         }
 
         function updateCircleOnClick(circle, index) {
-            const currentColor = circle.style.backgroundColor;
-            const nextColorIndex = (COLORS.indexOf(currentColor) + 1) % COLORS.length;
-            const newColor = COLORS[nextColorIndex];
-            circle.style.backgroundColor = newColor;
-            localStorage.setItem(`ST${index}`, newColor);
-            updateCircleText(circle, newColor, Math.floor((index - 1) / COLUMNS));
+            if (isOffOnActive) {
+                circle.style.backgroundColor = 'red';
+                localStorage.setItem(`arche_colorM${index}`, 'red');
+                updateCircleText(circle, 'red', Math.floor((index - 1) / COLUMNS));
+            } else {
+                const currentColor = circle.style.backgroundColor;
+                const nextColorIndex = (COLORS.indexOf(currentColor) + 1) % COLORS.length;
+                const newColor = COLORS[nextColorIndex];
+                circle.style.backgroundColor = newColor;
+                localStorage.setItem(`ST${index}`, newColor);
+                updateCircleText(circle, newColor, Math.floor((index - 1) / COLUMNS));
+            }
         }
 
         function updateCircleText(circle, color, row) {
@@ -246,7 +267,7 @@
                 const circle = cell.querySelector('.circle');
                 if (circle) {
                     circle.style.backgroundColor = item.color;
-                    localStorage.setItem(`arche_colorM${item.index}`, item.color);
+                    localStorage.setItem(`ST${item.index}`, item.color);
                     updateCircleText(circle, item.color, Math.floor((item.index - 1) / COLUMNS));
                 }
             });
@@ -264,77 +285,26 @@
                 const circle = cell.querySelector('.circle');
                 if (circle) {
                     circle.style.backgroundColor = 'red';
-                    updateCircleText(circle, 'red', Math.floor(i / COLUMNS));
+                    const row = Math.floor(i / COLUMNS);
+                    updateCircleText(circle, 'red', row);
                     localStorage.setItem(`ST${i + 1}`, 'red');
                 }
             }
         }
-    
-let isLocked = true;
-let isOffOnActive = false;
 
-function toggleLock() {
-    isLocked = !isLocked;
-    const lockButton = document.getElementById('lockButton');
-    lockButton.textContent = isLocked ? 'Bloqueado' : 'Desbloqueado';
-    lockButton.classList.toggle('unlocked', !isLocked);
-}
+        function toggleLock() {
+            isLocked = !isLocked;
+            const lockButton = document.getElementById('lockButton');
+            lockButton.textContent = isLocked ? 'Bloqueado' : 'Desbloqueado';
+            lockButton.classList.toggle('unlocked', !isLocked);
+        }
 
-function toggleOffOn() {
-    isOffOnActive = !isOffOnActive;
-    const offOnButton = document.getElementById('offOnButton');
-    offOnButton.textContent = isOffOnActive ? 'ON' : 'OFF';
-    offOnButton.classList.toggle('on', isOffOnActive);
-}
-
-function updateCircleOnClick(circle, index) {
-    if (isLocked) return;
-
-    if (isOffOnActive) {
-        circle.style.backgroundColor = 'red';
-        localStorage.setItem('ST' + index, 'red');
-        const row = Math.floor((index - 1) / 16);
-        updateCircleText(circle, 'red', row);
-    } else {
-        const currentColor = circle.style.backgroundColor;
-        const nextColorIndex = (colors.indexOf(currentColor) + 1) % colors.length;
-        const newColor = colors[nextColorIndex];
-        circle.style.backgroundColor = newColor;
-        localStorage.setItem('ST' + index, newColor);
-        const row = Math.floor((index - 1) / 16);
-        updateCircleText(circle, newColor, row);
-    }
-}
-
-function updateCircleText(circle, color, row) {
-    if (color === 'gray') {
-        circle.textContent = '1/2';
-        circle.style.color = 'black';
-    } else if (color === 'yellow') {
-        circle.textContent = 'L';
-        circle.style.color = 'black';
-    } else if (color === 'black') {
-        circle.textContent = 'C';
-        circle.style.color = 'white';
-    } else if (color === 'cyan') {
-        circle.textContent = 'Bad';
-        circle.style.color = 'black';
-    } else if (color === 'blue') {
-        circle.textContent = 'B';
-        circle.style.color = 'white';
-    } else if (color === 'orange') {
-        circle.textContent = 'Vb';
-        circle.style.color = 'black';
-    } else if (color === 'red') {
-        const rowNumbers = ['7', '8', '9', '10', '11', '12', '1', '2'];
-        circle.textContent = rowNumbers[row];
-        circle.style.color = 'white';
-    } else {
-        circle.textContent = '';
-        circle.style.color = '';
-    }
-}
-
-</script>
+        function toggleOffOn() {
+            isOffOnActive = !isOffOnActive;
+            const offOnButton = document.getElementById('offOnButton');
+            offOnButton.textContent = isOffOnActive ? 'ON' : 'OFF';
+            offOnButton.classList.toggle('on', isOffOnActive);
+        }
+    </script>
 </body>
 </html>
