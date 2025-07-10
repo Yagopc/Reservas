@@ -6,19 +6,19 @@
     <style>
         #grid {
             display: grid;
-            grid-template-columns: repeat(16, 50px);
-            grid-template-rows: repeat(8, 50px);
+            grid-template-columns: repeat(16, 1fr);
+            grid-template-rows: repeat(8, 1fr);
             gap: 2px;
+            box-sizing: border-box;
         }
         .cell {
             border: 1px solid black;
+            position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
-            position: relative;
-            box-sizing: border-box;
-            min-width: 50px;
-            min-height: 50px;
+            width: 50px;
+            height: 50px;
         }
         .cell:hover {
             background-color: #f0f0f0;
@@ -26,7 +26,6 @@
         .cell.text {
             background-color: black;
             color: white;
-            font-size: 16px;
         }
         .circle {
             width: 30px;
@@ -39,66 +38,72 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 16px; /* Reducido para evitar desbordamiento */
+            font-size: 20px;
             font-weight: bold;
-            text-align: center;
         }
         .highlighted {
             background-color: yellow;
         }
-    </style>
+        color1: #FFD700;
+    
+#lockButton {
+    background-color: red;
+    color: white;
+    padding: 5px 10px;
+    margin-left: 10px;
+}
+#lockButton.unlocked {
+    background-color: green;
+}
+#offOnButton {
+    background-color: red;
+    color: white;
+    padding: 5px 10px;
+    margin-left: 10px;
+}
+#offOnButton.on {
+    background-color: green;
+}
+
+</style>
 </head>
 <body>
     <div id="grid"></div>
     <button onclick="saveData()">Guardar Datos</button>
     <button onclick="loadData()">Cargar Datos</button>
     <button onclick="confirmReset()">Reinicio</button>
+    <button id="lockButton" onclick="toggleLock()">Bloqueado</button>
+    <button id="offOnButton" onclick="toggleOffOn()">OFF</button>
     <button onclick="window.location.href='https://yagopc.github.io/Reservas/FM.html'">FM</button>
-    <button onclick="window.location.href='https://yagopc.github.io/Reservas/index.html'">FT</button>
+    <button onclick="window.location.href='https://yagopc.github.io/Reservas/FT.html'">FT</button>
     <button onclick="window.location.href='https://yagopc.github.io/Reservas/ST.html'">ST</button>
     <div>
         <input type="text" id="serverUrl" placeholder="Ingrese la URL del servidor" style="width: 300px;">
         <button onclick="loadDataFromServer()">Cargar desde Servidor</button>
     </div>
     <script>
-        const GRID_SIZE = 144;
-        const COLUMNS = 16;
-        const COLORS = ['red', 'green', 'blue', 'cyan', 'yellow', 'gray', 'orange', 'black'];
-        const TEXT_MAPPING = {
-            1: 'PC', 2: 'GIN', 3: 'P5', 4: 'P6', 5: 'PE', 6: 'PD1', 7: 'PD2', 8: 'PD3',
-            9: 'PD4', 10: 'CF', 11: 'S1', 12: 'S2', 13: 'S3', 14: 'FR ', 15: 'T', 16: ' ',
+        const grid = document.getElementById('grid');
+        const colors = ['red', 'green', 'blue', 'cyan', 'yellow', 'gray', 'orange', 'black'];
+        const textMapping = {
+            1: 'PC', 2: 'GIN', 3: 'P5', 4: 'P6', 5: 'PE', 6: 'PD1', 7: 'PD2', 8: 'PD3', 9: 'PD4', 10: 'CF', 11: 'S1', 12: 'S2', 13: 'S3', 14: 'FR ', 15: 'T', 16: " ",
             32: 'H8', 48: 'H9', 64: 'H10', 80: 'H11', 96: 'H12', 112: 'H13', 128: 'H14', 144: 'H15'
         };
-        const COLOR_TEXT_MAPPING = {
-            gray: { text: '1/2', color: 'black' },
-            yellow: { text: 'L', color: 'black' },
-            black: { text: 'F', color: 'white' },
-            cyan: { text: 'Bad', color: 'black' },
-            blue: { text: 'B', color: 'white' },
-            orange: { text: 'Vb', color: 'black' },
-            red: { text: (row) => {
-                const textIndex = (row + 1) * COLUMNS; // Índice de la celda de texto en la última columna
-                const text = TEXT_MAPPING[textIndex] || '';
-                return text.replace('H', ''); // Extrae el número (e.g., 'H15' → '15', 'H22' → '22')
-            }, color: 'white' }
-        };
 
-        const grid = document.getElementById('grid');
         let highlightedRows = new Set();
         let highlightedColumns = new Set();
 
-        for (let i = 1; i <= GRID_SIZE; i++) {
+        for (let i = 1; i <= 128; i++) {
             const cell = document.createElement('div');
             cell.classList.add('cell');
-            cell.dataset.column = (i - 1) % COLUMNS;
-            cell.dataset.row = Math.floor((i - 1) / COLUMNS);
+            cell.dataset.column = (i - 1) % 16;
+            cell.dataset.row = Math.floor((i - 1) / 16);
 
-            if (TEXT_MAPPING[i]) {
-                cell.textContent = TEXT_MAPPING[i];
+            if (textMapping[i]) {
+                cell.textContent = textMapping[i];
                 cell.classList.add('text');
-                if (i <= COLUMNS) {
+                if (i <= 16) {
                     cell.addEventListener('click', function() { toggleHighlight(this.dataset.column, 'column'); });
-                } else if (i % COLUMNS === 0) {
+                } else if (i % 16 === 0) {
                     cell.addEventListener('click', function() { toggleHighlight(this.dataset.row, 'row'); });
                 }
             } else {
@@ -112,49 +117,102 @@
         }
 
         function toggleHighlight(index, type) {
-            const set = type === 'column' ? highlightedColumns : highlightedRows;
-            if (set.has(index)) {
-                set.delete(index);
-            } else {
-                set.clear();
-                set.add(index);
+            if (type === 'column') {
+                if (highlightedColumns.has(index)) {
+                    highlightedColumns.delete(index);
+                } else {
+                    highlightedColumns.clear();
+                    highlightedColumns.add(index);
+                }
+            } else if (type === 'row') {
+                if (highlightedRows.has(index)) {
+                    highlightedRows.delete(index);
+                } else {
+                    highlightedRows.clear();
+                    highlightedRows.add(index);
+                }
             }
             updateGridBackground();
         }
 
         function updateGridBackground() {
-            for (let i = 0; i < grid.children.length; i++) {
-                const cell = grid.children[i];
+            for (let i = 1; i <= 128; i++) {
+                const cell = grid.children[i - 1];
+                const cellRow = cell.dataset.row;
+                const cellColumn = cell.dataset.column;
                 cell.classList.remove('highlighted');
-                if (highlightedRows.has(cell.dataset.row) || highlightedColumns.has(cell.dataset.column)) {
+                if (highlightedRows.has(cellRow)) {
+                    cell.classList.add('highlighted');
+                }
+                if (highlightedColumns.has(cellColumn)) {
                     cell.classList.add('highlighted');
                 }
             }
         }
 
         function updateCircleColor(circle, index) {
-            const colorIndex = (index - 17) % COLORS.length;
-            const savedColor = localStorage.getItem(`SM${index}`);
-            const color = savedColor || COLORS[colorIndex >= 0 ? colorIndex : 0];
-            circle.style.backgroundColor = color;
-            updateCircleText(circle, color, Math.floor((index - 1) / COLUMNS));
+            const colorIndex = (index - 17) % colors.length;
+            const savedColor = localStorage.getItem('arche_color' + index);
+            circle.style.backgroundColor = savedColor || colors[colorIndex];
+            
+            const row = Math.floor((index - 1) / 16);
+            if (circle.style.backgroundColor === 'gray') {
+                circle.textContent = '1/2';
+                circle.style.color = 'black';
+            } else if (circle.style.backgroundColor === 'yellow') {
+                circle.textContent = 'L';
+                circle.style.color = 'black';
+            } else if (circle.style.backgroundColor === 'black') {
+                circle.textContent = 'C';
+                circle.style.color = 'white';
+            } else if (circle.style.backgroundColor === 'cyan') {
+                circle.textContent = 'Bad';
+                circle.style.color = 'black';
+            } else if (circle.style.backgroundColor === 'orange') {
+                circle.textContent = 'Vb';
+                circle.style.color = 'black';
+            } else if (circle.style.backgroundColor === 'blue') {
+                circle.textContent = 'B';
+                circle.style.color = 'white';
+            } else if (circle.style.backgroundColor === 'red') {
+                const rowNumbers = ['7', '8', '9', '10', '11', '12', '1', '2'];
+                circle.textContent = rowNumbers[row];
+                circle.style.color = 'white';
+            } else {
+                circle.textContent = '';
+                circle.style.color = '';
+            }
         }
 
         function updateCircleOnClick(circle, index) {
-            const currentColor = circle.style.backgroundColor;
-            const nextColorIndex = (COLORS.indexOf(currentColor) + 1) % COLORS.length;
-            const newColor = COLORS[nextColorIndex];
-            circle.style.backgroundColor = newColor;
-            localStorage.setItem(`SM${index}`, newColor);
-            updateCircleText(circle, newColor, Math.floor((index - 1) / COLUMNS));
-        }
-
-        function updateCircleText(circle, color, row) {
-            const mapping = COLOR_TEXT_MAPPING[color];
-            if (mapping) {
-                const text = typeof mapping.text === 'function' ? mapping.text(row) : mapping.text;
-                circle.textContent = text || '';
-                circle.style.color = mapping.color || '';
+            let currentColor = circle.style.backgroundColor;
+            let nextColorIndex = (colors.indexOf(currentColor) + 1) % colors.length;
+            circle.style.backgroundColor = colors[nextColorIndex];
+            localStorage.setItem('arche_color' + index, colors[nextColorIndex]);
+            
+            const row = Math.floor((index - 1) / 16);
+            if (circle.style.backgroundColor === 'gray') {
+                circle.textContent = '1/2';
+                circle.style.color = 'black';
+            } else if (circle.style.backgroundColor === 'yellow') {
+                circle.textContent = 'L';
+                circle.style.color = 'black';
+            } else if (circle.style.backgroundColor === 'black') {
+                circle.textContent = 'C';
+                circle.style.color = 'white';
+            } else if (circle.style.backgroundColor === 'cyan') {
+                circle.textContent = 'Bad';
+                circle.style.color = 'black';
+            } else if (circle.style.backgroundColor === 'blue') {
+                circle.textContent = 'B';
+                circle.style.color = 'white';
+            } else if (circle.style.backgroundColor === 'orange') {
+                circle.textContent = 'Vb';
+                circle.style.color = 'black';
+            } else if (circle.style.backgroundColor === 'red') {
+                const rowNumbers = ['7', '8', '9', '10', '11', '12', '1', '2'];
+                circle.textContent = rowNumbers[row];
+                circle.style.color = 'white';
             } else {
                 circle.textContent = '';
                 circle.style.color = '';
@@ -163,17 +221,17 @@
 
         function saveData() {
             const data = [];
-            for (let i = 0; i < grid.children.length; i++) {
-                const cell = grid.children[i];
+            for (let i = 1; i <= 120; i++) {
+                const cell = grid.children[i - 1];
                 const circle = cell.querySelector('.circle');
                 if (circle) {
-                    data.push({ index: i + 1, color: circle.style.backgroundColor });
+                    data.push({ index: i, color: circle.style.backgroundColor });
                 }
             }
             const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = 'SM.json'; // Cambiado de Sarchedat.json a SM.json
+            a.download = 'Sarchedat.json';
             a.click();
         }
 
@@ -183,15 +241,44 @@
             input.accept = 'application/json';
             input.onchange = function(event) {
                 const file = event.target.files[0];
-                if (!file) return;
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    try {
-                        const data = JSON.parse(e.target.result);
-                        processData(data);
-                    } catch (error) {
-                        alert('Error al procesar el archivo: ' + error.message);
-                    }
+                    const data = JSON.parse(e.target.result);
+                    data.forEach(item => {
+                        const cell = grid.children[item.index - 1];
+                        const circle = cell.querySelector('.circle');
+                        if (circle) {
+                            circle.style.backgroundColor = item.color;
+                            localStorage.setItem('arche_color' + item.index, item.color);
+                            const row = Math.floor((item.index - 1) / 16);
+                            if (item.color === 'gray') {
+                                circle.textContent = '1/2';
+                                circle.style.color = 'black';
+                            } else if (item.color === 'yellow') {
+                                circle.textContent = 'L';
+                                circle.style.color = 'black';
+                            } else if (item.color === 'black') {
+                                circle.textContent = 'C';
+                                circle.style.color = 'white';
+                            } else if (item.color === 'cyan') {
+                                circle.textContent = 'Bad';
+                                circle.style.color = 'black';
+                            } else if (item.color === 'blue') {
+                                circle.textContent = 'B';
+                                circle.style.color = 'white';
+                            } else if (item.color === 'orange') {
+                                circle.textContent = 'Vb';
+                                circle.style.color = 'black';
+                            } else if (item.color === 'red') {
+                                const rowNumbers = ['7', '8', '9', '10', '11', '12', '1', '2'];
+                                circle.textContent = rowNumbers[row];
+                                circle.style.color = 'white';
+                            } else {
+                                circle.textContent = '';
+                                circle.style.color = '';
+                            }
+                        }
+                    });
                 };
                 reader.readAsText(file);
             };
@@ -204,49 +291,143 @@
                 alert('Por favor, ingrese una URL válida.');
                 return;
             }
+
             fetch(url)
                 .then(response => {
-                    if (!response.ok) throw new Error('Error al cargar los datos desde el servidor.');
+                    if (!response.ok) {
+                        throw new Error('Error al cargar los datos desde el servidor.');
+                    }
                     return response.json();
                 })
                 .then(data => {
-                    processData(data);
+                    data.forEach(item => {
+                        const cell = grid.children[item.index - 1];
+                        const circle = cell.querySelector('.circle');
+                        if (circle) {
+                            circle.style.backgroundColor = item.color;
+                            localStorage.setItem('arche_color' + item.index, item.color);
+                            const row = Math.floor((item.index - 1) / 16);
+                            if (item.color === 'gray') {
+                                circle.textContent = '1/2';
+                                circle.style.color = 'black';
+                            } else if (item.color === 'yellow') {
+                                circle.textContent = 'L';
+                                circle.style.color = 'black';
+                            } else if (item.color === 'black') {
+                                circle.textContent = 'C';
+                                circle.style.color = 'white';
+                            } else if (item.color === 'cyan') {
+                                circle.textContent = 'Bad';
+                                circle.style.color = 'black';
+                            } else if (item.color === 'blue') {
+                                circle.textContent = 'B';
+                                circle.style.color = 'white';
+                            } else if (item.color === 'orange') {
+                                circle.textContent = 'Vb';
+                                circle.style.color = 'black';
+                            } else if (item.color === 'red') {
+                                const rowNumbers = ['7', '8', '9', '10', '11', '12', '1', '2'];
+                                circle.textContent = rowNumbers[row];
+                                circle.style.color = 'white';
+                            } else {
+                                circle.textContent = '';
+                                circle.style.color = '';
+                            }
+                        }
+                    });
                     alert('Datos cargados exitosamente desde el servidor.');
                 })
-                .catch(error => alert('Error: ' + error.message));
-        }
-
-        function processData(data) {
-            data.forEach(item => {
-                if (!item.index || !item.color) return;
-                const cell = grid.children[item.index - 1];
-                if (!cell) return;
-                const circle = cell.querySelector('.circle');
-                if (circle) {
-                    circle.style.backgroundColor = item.color;
-                    localStorage.setItem(`arche_colorM${item.index}`, item.color);
-                    updateCircleText(circle, item.color, Math.floor((item.index - 1) / COLUMNS));
-                }
-            });
+                .catch(error => {
+                    alert('Error: ' + error.message);
+                });
         }
 
         function confirmReset() {
-            if (confirm('¿Estás seguro de que quieres reiniciar todos los círculos a rojo?')) {
+            if (confirm("¿Estás seguro de que quieres reiniciar todos los círculos a rojo?")) {
                 resetCircles();
             }
         }
 
         function resetCircles() {
-            for (let i = 0; i < grid.children.length; i++) {
-                const cell = grid.children[i];
+            for (let i = 1; i <= 144; i++) {
+                const cell = grid.children[i - 1];
                 const circle = cell.querySelector('.circle');
                 if (circle) {
                     circle.style.backgroundColor = 'red';
-                    updateCircleText(circle, 'red', Math.floor(i / COLUMNS));
-                    localStorage.setItem(`SM${i + 1}`, 'red');
+                    const row = Math.floor((i - 1) / 16);
+                    const rowNumbers = ['7', '8', '9', '10', '11', '12', '1', '2'];
+                    circle.textContent = rowNumbers[row];
+                    circle.style.color = 'white';
+                    localStorage.setItem('arche_color' + i, 'red');
                 }
             }
         }
-    </script>
+    
+let isLocked = true;
+let isOffOnActive = false;
+
+function toggleLock() {
+    isLocked = !isLocked;
+    const lockButton = document.getElementById('lockButton');
+    lockButton.textContent = isLocked ? 'Bloqueado' : 'Desbloqueado';
+    lockButton.classList.toggle('unlocked', !isLocked);
+}
+
+function toggleOffOn() {
+    isOffOnActive = !isOffOnActive;
+    const offOnButton = document.getElementById('offOnButton');
+    offOnButton.textContent = isOffOnActive ? 'ON' : 'OFF';
+    offOnButton.classList.toggle('on', isOffOnActive);
+}
+
+function updateCircleOnClick(circle, index) {
+    if (isLocked) return;
+
+    if (isOffOnActive) {
+        circle.style.backgroundColor = 'red';
+        localStorage.setItem('arche_color' + index, 'red');
+        const row = Math.floor((index - 1) / 16);
+        updateCircleText(circle, 'red', row);
+    } else {
+        const currentColor = circle.style.backgroundColor;
+        const nextColorIndex = (colors.indexOf(currentColor) + 1) % colors.length;
+        const newColor = colors[nextColorIndex];
+        circle.style.backgroundColor = newColor;
+        localStorage.setItem('arche_color' + index, newColor);
+        const row = Math.floor((index - 1) / 16);
+        updateCircleText(circle, newColor, row);
+    }
+}
+
+function updateCircleText(circle, color, row) {
+    if (color === 'gray') {
+        circle.textContent = '1/2';
+        circle.style.color = 'black';
+    } else if (color === 'yellow') {
+        circle.textContent = 'L';
+        circle.style.color = 'black';
+    } else if (color === 'black') {
+        circle.textContent = 'C';
+        circle.style.color = 'white';
+    } else if (color === 'cyan') {
+        circle.textContent = 'Bad';
+        circle.style.color = 'black';
+    } else if (color === 'blue') {
+        circle.textContent = 'B';
+        circle.style.color = 'white';
+    } else if (color === 'orange') {
+        circle.textContent = 'Vb';
+        circle.style.color = 'black';
+    } else if (color === 'red') {
+        const rowNumbers = ['7', '8', '9', '10', '11', '12', '1', '2'];
+        circle.textContent = rowNumbers[row];
+        circle.style.color = 'white';
+    } else {
+        circle.textContent = '';
+        circle.style.color = '';
+    }
+}
+
+</script>
 </body>
 </html>
