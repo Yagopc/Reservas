@@ -46,16 +46,38 @@
         .highlighted {
             background-color: yellow;
         }
-    </style>
+    
+#lockButton {
+    background-color: red;
+    color: white;
+    padding: 5px 10px;
+    margin-left: 10px;
+}
+#lockButton.unlocked {
+    background-color: green;
+}
+#offOnButton {
+    background-color: red;
+    color: white;
+    padding: 5px 10px;
+    margin-left: 10px;
+}
+#offOnButton.on {
+    background-color: green;
+}
+
+</style>
 </head>
-    </body>
-    <div id="grid"></div>
+<body>
+   <div id="grid"></div>
     <button onclick="saveData()">Guardar Datos</button>
     <button onclick="loadData()">Cargar Datos</button>
     <button onclick="confirmReset()">Reinicio</button>
-    <button onclick="window.location.href='https://yagopc.github.io/Reservas/index.html'">FT</button>
+    <button id="lockButton" onclick="toggleLock()">Bloqueado</button>
+    <button id="offOnButton" onclick="toggleOffOn()">OFF</button>
     <button onclick="window.location.href='https://yagopc.github.io/Reservas/FM.html'">FM</button>
     <button onclick="window.location.href='https://yagopc.github.io/Reservas/SM.html'">SM</button>
+    <button onclick="window.location.href='https://yagopc.github.io/Reservas/index.html'">FT</button>
     <div>
         <input type="text" id="serverUrl" placeholder="Ingrese la URL del servidor" style="width: 300px;">
         <button onclick="loadDataFromServer()">Cargar desde Servidor</button>
@@ -72,7 +94,7 @@
         const COLOR_TEXT_MAPPING = {
             gray: { text: '1/2', color: 'black' },
             yellow: { text: 'L', color: 'black' },
-            black: { text: 'F', color: 'white' },
+            black: { text: 'C', color: 'white' },
             cyan: { text: 'Bad', color: 'black' },
             blue: { text: 'B', color: 'white' },
             orange: { text: 'Vb', color: 'black' },
@@ -134,7 +156,7 @@
 
         function updateCircleColor(circle, index) {
             const colorIndex = (index - 17) % COLORS.length;
-            const savedColor = localStorage.getItem(`ST${index}`);
+            const savedColor = localStorage.getItem(`arche_colorM${index}`);
             const color = savedColor || COLORS[colorIndex >= 0 ? colorIndex : 0];
             circle.style.backgroundColor = color;
             updateCircleText(circle, color, Math.floor((index - 1) / COLUMNS));
@@ -145,7 +167,7 @@
             const nextColorIndex = (COLORS.indexOf(currentColor) + 1) % COLORS.length;
             const newColor = COLORS[nextColorIndex];
             circle.style.backgroundColor = newColor;
-            localStorage.setItem(`ST${index}`, newColor);
+            localStorage.setItem(`arche_colorM${index}`, newColor);
             updateCircleText(circle, newColor, Math.floor((index - 1) / COLUMNS));
         }
 
@@ -173,7 +195,7 @@
             const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = 'ST.json';
+            a.download = 'Sarchedat.json';
             a.click();
         }
 
@@ -224,7 +246,7 @@
                 const circle = cell.querySelector('.circle');
                 if (circle) {
                     circle.style.backgroundColor = item.color;
-                    localStorage.setItem(`ST${item.index}`, item.color);
+                    localStorage.setItem(`arche_colorM${item.index}`, item.color);
                     updateCircleText(circle, item.color, Math.floor((item.index - 1) / COLUMNS));
                 }
             });
@@ -243,10 +265,76 @@
                 if (circle) {
                     circle.style.backgroundColor = 'red';
                     updateCircleText(circle, 'red', Math.floor(i / COLUMNS));
-                    localStorage.setItem(`ST${i + 1}`, 'red');
+                    localStorage.setItem(`arche_colorM${i + 1}`, 'red');
                 }
             }
         }
-    </script>
+    
+let isLocked = true;
+let isOffOnActive = false;
+
+function toggleLock() {
+    isLocked = !isLocked;
+    const lockButton = document.getElementById('lockButton');
+    lockButton.textContent = isLocked ? 'Bloqueado' : 'Desbloqueado';
+    lockButton.classList.toggle('unlocked', !isLocked);
+}
+
+function toggleOffOn() {
+    isOffOnActive = !isOffOnActive;
+    const offOnButton = document.getElementById('offOnButton');
+    offOnButton.textContent = isOffOnActive ? 'ON' : 'OFF';
+    offOnButton.classList.toggle('on', isOffOnActive);
+}
+
+function updateCircleOnClick(circle, index) {
+    if (isLocked) return;
+
+    if (isOffOnActive) {
+        circle.style.backgroundColor = 'red';
+        localStorage.setItem('arche_colorM' + index, 'red');
+        const row = Math.floor((index - 1) / 16);
+        updateCircleText(circle, 'red', row);
+    } else {
+        const currentColor = circle.style.backgroundColor;
+        const nextColorIndex = (colors.indexOf(currentColor) + 1) % colors.length;
+        const newColor = colors[nextColorIndex];
+        circle.style.backgroundColor = newColor;
+        localStorage.setItem('arche_colorM' + index, newColor);
+        const row = Math.floor((index - 1) / 16);
+        updateCircleText(circle, newColor, row);
+    }
+}
+
+function updateCircleText(circle, color, row) {
+    if (color === 'gray') {
+        circle.textContent = '1/2';
+        circle.style.color = 'black';
+    } else if (color === 'yellow') {
+        circle.textContent = 'L';
+        circle.style.color = 'black';
+    } else if (color === 'black') {
+        circle.textContent = 'C';
+        circle.style.color = 'white';
+    } else if (color === 'cyan') {
+        circle.textContent = 'Bad';
+        circle.style.color = 'black';
+    } else if (color === 'blue') {
+        circle.textContent = 'B';
+        circle.style.color = 'white';
+    } else if (color === 'orange') {
+        circle.textContent = 'Vb';
+        circle.style.color = 'black';
+    } else if (color === 'red') {
+        const rowNumbers = ['7', '8', '9', '10', '11', '12', '1', '2'];
+        circle.textContent = rowNumbers[row];
+        circle.style.color = 'white';
+    } else {
+        circle.textContent = '';
+        circle.style.color = '';
+    }
+}
+
+</script>
 </body>
 </html>
